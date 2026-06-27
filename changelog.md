@@ -153,3 +153,43 @@ Implemented the core tenant resolution and database switching mechanism. The app
 
 **Phase 1, Task 4: Tenant Registration API**
 Implement the endpoint for new tenants to register, initiating the pending state and recording their subdomain claim.
+
+---
+
+## 2026-06-27 — Phase 1, Task 4: Tenant Registration API + Manual $100 Payment Request
+
+### Summary
+Created the Tenant Registration API endpoint on the central platform. This allows new tenants to register their subdomain and simultaneously generates a manual payment request for their $100 registration fee. At this stage, the tenant is assigned a `pending_payment` status and the database is not yet provisioned.
+
+### Files Created
+* `app/Support/Enums/PaymentStatus.php`
+* `app/Domains/Payment/Models/PaymentRequest.php`
+* `database/migrations/central/2026_06_27_163000_create_payment_requests_table.php`
+* `app/Http/Requests/RegisterTenantRequest.php`
+* `app/Domains/Tenancy/Actions/RegisterTenantAction.php`
+* `app/Http/Controllers/MainApp/TenantRegistrationController.php`
+
+### Files Modified
+* `app/Domains/Tenancy/Models/Tenant.php` (Added `paymentRequests` relationship)
+* `routes/api.php` (Created the main application API entrypoint)
+* `bootstrap/app.php` (Updated routing to point `api` to `routes/api.php`)
+* `changelog.md`
+* `DECISIONS.md`
+* `docs/WORKFLOW.md`
+
+### Migrations
+* **Migration Created**: `database/migrations/central/2026_06_27_163000_create_payment_requests_table.php`
+* **Were migrations run?**: Central migrations that existed *before* Task 4 were run prior to this implementation. However, the new `payment_requests` migration created during Task 4 was **not** run.
+
+### Endpoint Added
+* `POST /api/tenant-registrations` (Main app route, central database, no tenant middleware)
+
+### Verification Commands Executed
+* `php artisan optimize:clear` (Success)
+* `php artisan route:list` (Success)
+* `php -l ...` syntax checks for the newly created files (Success)
+
+### Remaining Next Task
+
+**Phase 1, Task 5: Admin Payment Approval & Tenant Provisioning Job**
+Implement the admin endpoint to approve the manual payment request, which then activates the tenant and dispatches a background job to create and migrate the tenant's database.

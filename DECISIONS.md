@@ -436,3 +436,17 @@ Tenant identification is handled exclusively by subdomain matching during the HT
 2. **Database Switching**: The `TenantDatabaseManager` centralizes the logic to change the active connection config (`database.connections.tenant.database`), purge the existing connection, and reconnect. 
 3. **Leakage Prevention**: By purging the `tenant` connection after the request finishes in `SwitchTenantDatabase`, we prevent connection leakage (where a subsequent request on the same PHP worker accidentally executes queries against the previous request's tenant database).
 4. **Safety Validation**: Strictly validating the dynamically generated database name ensures that no SQL injection vulnerabilities exist when we execute the `CREATE DATABASE` statement during tenant provisioning.
+
+---
+
+## 22. Tenant Registration & Manual Payment Request
+
+### Decision
+
+Tenant registration occurs exclusively on the central database via a main-app endpoint. The newly registered tenant is assigned a `pending_payment` status. Instead of an automated payment gateway integration, the system creates a manual `PaymentRequest` record for the $100 registration fee. The tenant database is **not** created at this step.
+
+### Reason
+
+1. **Manual Assessment Requirement**: The technical assessment requires that tenant approval and fee processing be handled manually by an admin, so automatic payment gateways (like Stripe) are intentionally avoided.
+2. **Configuration-Driven Fees**: The $100 fee is configured on the server-side (`config('tenancy.registration_fee.amount')`) and is not accepted from the client request payload. This prevents malicious actors from submitting a registration with a $0 fee.
+3. **Deferred Provisioning**: The actual creation of the tenant database and execution of tenant migrations is deferred until the manual payment is approved, conserving system resources for unverified or abandoned registrations.
