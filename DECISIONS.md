@@ -421,3 +421,18 @@ The `tenants` and `tenant_domains` tables are stored in the central database (`c
 ### Reason
 
 The tenant registry needs to act as the global source of truth across the entire platform. Placing this in the central database allows middleware (running before any tenant database connection is established) to quickly look up a tenant by their subdomain and determine which database to connect to. Additionally, domains are stored centrally to enforce global uniqueness of custom domains and subdomains across the whole platform, preventing collisions between different tenants.
+
+---
+
+## 21. Tenant Identification & Connection Switching
+
+### Decision
+
+Tenant identification is handled exclusively by subdomain matching during the HTTP middleware phase. The `TenantDatabaseManager` service is responsible for validating tenant database names (allowing only lowercase letters, numbers, and underscores) and safely switching the `tenant` database connection at runtime.
+
+### Reason
+
+1. **Subdomain Identification**: Using subdomains (e.g., `tenant1.crowdfund.test`) cleanly isolates tenant routing without relying on path prefixes or request payloads, mimicking standard SaaS platforms.
+2. **Database Switching**: The `TenantDatabaseManager` centralizes the logic to change the active connection config (`database.connections.tenant.database`), purge the existing connection, and reconnect. 
+3. **Leakage Prevention**: By purging the `tenant` connection after the request finishes in `SwitchTenantDatabase`, we prevent connection leakage (where a subsequent request on the same PHP worker accidentally executes queries against the previous request's tenant database).
+4. **Safety Validation**: Strictly validating the dynamically generated database name ensures that no SQL injection vulnerabilities exist when we execute the `CREATE DATABASE` statement during tenant provisioning.
