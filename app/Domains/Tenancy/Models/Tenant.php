@@ -70,6 +70,14 @@ class Tenant extends Model
     }
 
     /**
+     * Get the payment requests for the tenant.
+     */
+    public function paymentRequests(): HasMany
+    {
+        return $this->hasMany(\App\Domains\Payment\Models\PaymentRequest::class, 'tenant_id', 'id');
+    }
+
+    /**
      * Check if the tenant is active.
      */
     public function isActive(): bool
