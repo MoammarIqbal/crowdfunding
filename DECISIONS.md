@@ -376,8 +376,36 @@ For production, the following improvements are recommended:
 * Add rate source fallback for scraping failure.
 * Add admin dashboard UI.
 * Add Postman collection and API documentation.
-  '@ | Set-Content -Path DECISIONS.md
 
-````
+---
 
+## 19. Database Connection Configuration Decision
 
+### Decision
+
+The application defines three MySQL connections in `config/database.php`:
+
+1. `mysql` — the default Laravel connection, pointing to `crowdfund_central` via `DB_*` env vars.
+2. `central` — an explicit connection for cross-tenant data, using `CENTRAL_DB_*` env vars.
+3. `tenant` — a connection with `database => null`, dynamically switched at runtime.
+
+A separate `config/tenancy.php` file centralizes tenant-related configuration including database prefix, registration fee, platform currency, allowed issuer countries, and migration paths.
+
+### Reason
+
+Separating `central` and `tenant` connections allows models to declare `$connection = 'central'` or `$connection = 'tenant'` explicitly. The `tenant` connection starts with a null database name because the correct tenant database is only known after the subdomain middleware identifies the active tenant from the HTTP request.
+
+### Tenant Database Switching
+
+The `TenantDatabaseManager` service (to be implemented in a future task) will:
+
+1. Receive the tenant slug from middleware.
+2. Construct the database name using the configured prefix (e.g., `tenant_indonesia`).
+3. Set the database name on the `tenant` connection at runtime using `config(['database.connections.tenant.database' => $dbName])`.
+4. Purge and reconnect the tenant connection.
+
+### Environment Documentation
+
+* `.env.example` serves as safe environment documentation and is committed to version control.
+* `.env` is local-only and contains actual credentials.
+* `.env.example` must never contain real secrets or generated keys.

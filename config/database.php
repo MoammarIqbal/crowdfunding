@@ -114,6 +114,67 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | Central Database Connection
+        |----------------------------------------------------------------------
+        |
+        | Stores cross-tenant data: users, investors, agents, wallets,
+        | exchange rates, commission settings, payment requests, and
+        | audit logs. All global/shared data lives here.
+        |
+        */
+
+        'central' => [
+            'driver' => 'mysql',
+            'host' => env('CENTRAL_DB_HOST', '127.0.0.1'),
+            'port' => env('CENTRAL_DB_PORT', '3306'),
+            'database' => env('CENTRAL_DB_DATABASE', 'crowdfund_central'),
+            'username' => env('CENTRAL_DB_USERNAME', 'root'),
+            'password' => env('CENTRAL_DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | Tenant Database Connection
+        |----------------------------------------------------------------------
+        |
+        | Stores per-tenant data: issuers, projects, project return
+        | settings, investments, and tenant audit logs. The database
+        | name is null by default and will be set dynamically at
+        | runtime by TenantDatabaseManager via middleware.
+        |
+        */
+
+        'tenant' => [
+            'driver' => 'mysql',
+            'host' => env('TENANT_DB_HOST', '127.0.0.1'),
+            'port' => env('TENANT_DB_PORT', '3306'),
+            'database' => null,
+            'username' => env('TENANT_DB_USERNAME', 'root'),
+            'password' => env('TENANT_DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
     ],
 
     /*
