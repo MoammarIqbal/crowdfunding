@@ -409,3 +409,15 @@ The `TenantDatabaseManager` service (to be implemented in a future task) will:
 * `.env.example` serves as safe environment documentation and is committed to version control.
 * `.env` is local-only and contains actual credentials.
 * `.env.example` must never contain real secrets or generated keys.
+
+---
+
+## 20. Tenant Registry Database Location
+
+### Decision
+
+The `tenants` and `tenant_domains` tables are stored in the central database (`crowdfund_central`), and their models (`Tenant`, `TenantDomain`) explicitly use the `central` connection.
+
+### Reason
+
+The tenant registry needs to act as the global source of truth across the entire platform. Placing this in the central database allows middleware (running before any tenant database connection is established) to quickly look up a tenant by their subdomain and determine which database to connect to. Additionally, domains are stored centrally to enforce global uniqueness of custom domains and subdomains across the whole platform, preventing collisions between different tenants.

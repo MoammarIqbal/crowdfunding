@@ -8,6 +8,16 @@ This document describes the database and application infrastructure for the mult
 
 The system uses two categories of MySQL databases served from the same MySQL server instance:
 
+### Tenant Registry
+
+The core identity of all tenants is stored in the **Central Database**. The `tenants` and `tenant_domains` tables act as a global registry. They store:
+- Tenant identity (name, slug)
+- Subdomain and custom domains
+- Current status (e.g., active, suspended)
+- The name of their dedicated database (`database_name`)
+
+This registry allows the application to quickly look up a tenant and determine which database to connect to during the middleware phase, before any tenant database connections are established.
+
 ### Central Database (`crowdfund_central`)
 
 Stores all cross-tenant and global data:

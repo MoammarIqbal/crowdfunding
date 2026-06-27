@@ -62,3 +62,51 @@ Initialized the dual-database connection architecture required for multi-tenant 
 Alternatively, proceed to the Tenant model and migration setup if the team prefers to establish database tables next.
 
 Recommended next: **Phase 1, Task 2 — Tenant Model, TenantStatus Enum, and Central Migration Directory Setup** (create `database/migrations/central/` and `database/migrations/tenant/` directories, create the `tenants` table migration, and the `Tenant` model with `TenantStatus` enum).
+
+---
+
+## 2026-06-27 — Phase 1, Task 2: Tenant Registry Foundation
+
+### Summary
+
+Created the foundational structures for the Tenant domain. This includes setting up the necessary Enums, Models, Exceptions, Services, and Migrations for managing the `tenants` and `tenant_domains` records within the central database. The `TenantContext` service has been implemented and bound in the service container.
+
+### Files Created
+
+| File | Purpose |
+|---|---|
+| `app/Support/Enums/TenantStatus.php` | Defines the different lifecycle statuses for a tenant (pending_registration, active, suspended, etc). |
+| `app/Domains/Tenancy/Exceptions/TenantNotFoundException.php` | Thrown when a tenant cannot be found. |
+| `app/Domains/Tenancy/Exceptions/TenantInactiveException.php` | Thrown when trying to access a tenant that is not in active state. |
+| `app/Domains/Tenancy/Exceptions/TenantContextMissingException.php` | Thrown when trying to retrieve a tenant from the context but none is set. |
+| `app/Domains/Tenancy/Models/Tenant.php` | The main Tenant model representing a multi-tenant client in the central database. |
+| `app/Domains/Tenancy/Models/TenantDomain.php` | The model representing custom domains and subdomains assigned to a tenant. |
+| `app/Domains/Tenancy/Services/TenantContext.php` | A service class responsible for holding the active tenant throughout the request lifecycle. |
+| `database/migrations/central/2026_06_27_160518_create_tenants_table.php` | Migration for creating the `tenants` table in the central database. |
+| `database/migrations/central/2026_06_27_160519_create_tenant_domains_table.php` | Migration for creating the `tenant_domains` table in the central database. |
+
+### Files Modified
+
+| File | Change |
+|---|---|
+| `app/Providers/AppServiceProvider.php` | Registered the `TenantContext` service as a singleton. |
+| `DECISIONS.md` | Added notes regarding the tenant registry being stored centrally and why domains are stored centrally. |
+| `docs/INFRASTRUCTURE.md` | Added a section explaining the Tenant Registry and its role in the central DB. |
+| `changelog.md` | Added this entry. |
+
+### Important Notes
+
+1. Migrations have been created in `database/migrations/central` but **HAVE NOT BEEN RUN**. 
+2. The TenantContext does not yet have any middleware to populate it.
+3. Database switching is not yet implemented.
+
+### Corrections (Post-Review)
+- Removed a redundant index on `domain` in `tenant_domains` migration since `unique()` automatically applies one.
+- Enforced `registration_fee_amount` in the `tenants` migration to be non-nullable with a default of `100.00000000`.
+- Refactored `AppServiceProvider.php` to use a clean `use` import for the `TenantContext` binding.
+- Migrations are still intentionally unrun.
+
+### Remaining Next Task
+
+**Phase 1, Task 3: Tenant Database Provisioning & Middleware**
+Implement the tenant database creation logic and middleware to switch connections and populate the `TenantContext`.
