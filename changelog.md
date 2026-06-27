@@ -110,3 +110,46 @@ Created the foundational structures for the Tenant domain. This includes setting
 
 **Phase 1, Task 3: Tenant Database Provisioning & Middleware**
 Implement the tenant database creation logic and middleware to switch connections and populate the `TenantContext`.
+
+---
+
+## 2026-06-27 — Phase 1, Task 3: Tenant Database Provisioning & Middleware
+
+### Summary
+
+Implemented the core tenant resolution and database switching mechanism. The application now correctly identifies a tenant based on the requested subdomain, validates their active status, and dynamically switches the `tenant` database connection using the newly created `TenantDatabaseManager`. A placeholder migration was added to test the tenant connection separately from the central connection, and a diagnostic route was created for verification.
+
+### Files Created
+
+| File | Purpose |
+|---|---|
+| `app/Domains/Tenancy/Services/TenantDatabaseManager.php` | Handles database name generation, strict validation, safe connection switching, and database creation. |
+| `app/Http/Middleware/IdentifyTenant.php` | Intercepts subdomain requests, looks up the tenant in the central DB, and populates `TenantContext`. |
+| `app/Http/Middleware/EnsureTenantIsActive.php` | Guards against suspended, rejected, or pending tenants accessing their subdomain. |
+| `app/Http/Middleware/SwitchTenantDatabase.php` | Invokes `TenantDatabaseManager` to switch the active `tenant` connection for the request and purge it afterward. |
+| `routes/api_tenant.php` | Diagnostic routes restricted by the tenant middleware pipeline. |
+| `database/migrations/tenant/2026_06_27_161830_create_tenant_settings_table.php` | Placeholder migration strictly for the tenant database to verify segregated migrations later. |
+
+### Files Modified
+
+| File | Change |
+|---|---|
+| `bootstrap/app.php` | Registered middleware aliases (`identify.tenant`, `ensure.tenant.active`, `switch.tenant.database`) and the new `api_tenant.php` routing file. |
+| `changelog.md` | Added this entry. |
+| `DECISIONS.md` | Documented subdomain identification, DB switching logic, connection leakage prevention, and name validation. |
+| `docs/INFRASTRUCTURE.md` | Appended the tenant request flow with a visual diagram. |
+
+### Important Notes
+
+1. Migrations have been created in `database/migrations/tenant` but **HAVE NOT BEEN RUN**. 
+2. The `api/tenant-context` route is strictly diagnostic. It leverages the TenantContext.
+
+### Corrections (Post-Review)
+- Hardened subdomain extraction in `IdentifyTenant.php` to use a suffix-based approach instead of global string replacement. Extracted subdomains are now strictly validated against safe characters (lowercase letters, numbers, and hyphens).
+- No migrations were run during this correction pass.
+- No git commands were run during this correction pass.
+
+### Remaining Next Task
+
+**Phase 1, Task 4: Tenant Registration API**
+Implement the endpoint for new tenants to register, initiating the pending state and recording their subdomain claim.

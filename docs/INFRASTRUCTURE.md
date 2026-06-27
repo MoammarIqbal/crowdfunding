@@ -69,37 +69,25 @@ This approach avoids hardcoding tenant database names and supports an unlimited 
 
 ---
 
-## Request Flow (Future Implementation)
+## Request Flow
 
-```
-Client request to indonesia.crowdfund.test
-        │
-        ▼
-  Laravel Router
-        │
-        ▼
-  IdentifyTenant Middleware
-  → extracts subdomain ("indonesia")
-  → looks up tenant in central_db.tenants
-  → rejects if tenant not found
-        │
-        ▼
-  EnsureTenantIsActive Middleware
-  → rejects if tenant status ≠ active
-        │
-        ▼
-  SwitchTenantDatabase Middleware
-  → calls TenantDatabaseManager
-  → sets tenant connection database = "tenant_indonesia"
-  → purges and reconnects
-        │
-        ▼
-  TenantContext set (singleton)
-  → TenantContext::current(), ::id(), ::currency(), ::databaseName()
-        │
-        ▼
-  Tenant Controller handles request
-  → queries use 'tenant' connection automatically
+```mermaid
+sequenceDiagram
+    participant Client
+    participant IdentifyTenant
+    participant EnsureTenantIsActive
+    participant SwitchTenantDatabase
+    participant TenantContext
+    participant TenantDatabaseManager
+    
+    Client->>IdentifyTenant: Request to tenant subdomain
+    IdentifyTenant->>TenantContext: Look up Tenant in Central DB & Set
+    IdentifyTenant->>EnsureTenantIsActive: Next middleware
+    EnsureTenantIsActive->>SwitchTenantDatabase: Next middleware (if active)
+    SwitchTenantDatabase->>TenantDatabaseManager: configureTenantConnection()
+    TenantDatabaseManager-->>SwitchTenantDatabase: Purged & Reconnected
+    SwitchTenantDatabase->>Client: Handle Request (Tenant DB active)
+    SwitchTenantDatabase->>TenantDatabaseManager: purgeTenantConnection() (Cleanup)
 ```
 
 For main app requests (root domain), no tenant middleware runs and queries use the `central` connection.
